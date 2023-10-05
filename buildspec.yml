@@ -1,0 +1,56 @@
+version: 0.2
+env:
+  shell: bash
+  variables:
+    APP_NAME: partitionS3Replicate
+    TERRAFORM_VERSION: 1.4.5
+phases:
+  install:
+    runtime-versions:
+      python: 3.8
+    commands:
+      - '[[ -e .local/bin ]] || mkdir -p .local/bin'
+      - 'export PATH="$CODEBUILD_SRC_DIR/.local/bin:$PATH"'
+      - |
+        if [[ ! -e .local/bin/terraform ]]; then
+          curl --silent --fail --location https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip | zcat > .local/bin/terraform
+          chmod a+rx .local/bin/terraform
+        fi
+      - 'export TF_DATA_DIR="$CODEBUILD_SRC_DIR/.local/terraform"'
+      - '[[ -e $TF_DATA_DIR ]] || mkdir -p "$TF_DATA_DIR"'
+  build:
+    on-failure: ABORT
+    commands:
+      - 'cd "${CODEBUILD_SRC_DIR}/${PROJECT_SUBDIR}"'
+      - 'make lint-report || :'
+      - 'make test-report'
+      - 'make validate'
+      - 'make build'
+  post_build:
+    on-failure: ABORT
+    commands:
+      - 'cd "${CODEBUILD_SRC_DIR}/${PROJECT_SUBDIR}"'
+      - |
+        if [[ -n $PACKAGE_BUCKET || $PACKAGE_COUNT -gt 0 ]]; then
+          make package
+        fi
+artifacts:
+  files:
+    - $APP_NAME.zip
+  discard-paths: yes
+  base-directory: $CODEBUILD_SRC_DIR/$PROJECT_SUBDIR/dist/
+reports:
+  pylint:
+    files:
+      - pylint.xml
+    base-directory: $CODEBUILD_SRC_DIR/$PROJECT_SUBDIR/reports/
+    file-format: JUNITXML
+  pytest:
+    files:
+      - pytest.xml
+    base-directory: $CODEBUILD_SRC_DIR/$PROJECT_SUBDIR/reports/
+    file-format: JUNITXML
+cache:
+  paths:
+    - .local/**/*
+    - $CODEBUILD_SRC_DIR/$PROJECT_SUBDIR/.venv
