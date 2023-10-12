@@ -30,9 +30,10 @@ from urllib.parse import urlencode
 import boto3
 from botocore.exceptions import ClientError
 
-DST_BUCKET  = os.environ['DEST_BUCKET']
-DST_KMS_KEY = os.environ.get('DEST_KMS_KEY')
-DST_SECRET  = os.environ['DEST_SECRET']
+DST_BUCKET        = os.environ['DEST_BUCKET']
+DST_BUCKET_REGION = os.environ['DEST_BUCKET_REGION']
+DST_KMS_KEY       = os.environ.get('DEST_KMS_KEY')
+DST_SECRET        = os.environ['DEST_SECRET']
 
 OBJECTS_QUEUE = os.environ['OBJECTS_QUEUE']
 OBJECTS_TABLE = os.environ['OBJECTS_TABLE']
@@ -62,10 +63,9 @@ def get_dst_creds(secret_id=DST_SECRET):
 
     creds = {
         'aws_access_key_id': data['accesskey'],
-        'aws_secret_access_key': data['secretkey'],
+        'aws_secret_access_key': data['secretaccesskey'],
+        'region_name': DST_BUCKET_REGION,
     }
-    if data.get('region'):
-        creds['region_name'] = data['region']
 
     return creds
 
