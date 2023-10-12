@@ -78,7 +78,13 @@ class ReplicateObject:
 
     @classmethod
     def dst_creds(cls):
-        """ Get the destination credentials. """
+        """
+        Get the destination credentials. This caches them as a class attribute
+        to not keep looking them up in Secrets Manager each call.
+
+        Returns:
+            dict: credentials ready for use with a boto3.Session.
+        """
         if not cls._dst_creds:
             cls._dst_creds = get_dst_creds()
         return cls._dst_creds
