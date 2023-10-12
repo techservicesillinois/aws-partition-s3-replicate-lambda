@@ -1,6 +1,3 @@
-boto3
-freezegun
 moto
 pytest
-pytz
 pyyaml

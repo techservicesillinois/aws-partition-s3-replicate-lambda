@@ -53,7 +53,7 @@ sqs_rsrc = boto3.resource('sqs')
 def get_dst_creds(secret_id=DST_SECRET):
     """
     Get the destination credentials from Secrets Manager. It expects the secret
-    to have these fields: accesskey, secretkey, region.
+    to have these fields: accesskey, secretaccesskey, region.
 
     Args:
         secret_id (str): the name or ARN of the secret.

@@ -24,9 +24,10 @@ sys.path.insert(0, path_join(BASE, 'build'))
 for name in ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_SECURITY_TOKEN', 'AWS_SESSION_TOKEN']:
     os.environ[name] = 'testing'
 
-os.environ['DEST_BUCKET'] = 'dest-bucket'
-os.environ['DEST_KMS_KEY'] = ''
-os.environ['DEST_SECRET'] = 'dest-secret'
+os.environ['DEST_BUCKET']        = 'dest-bucket'
+os.environ['DEST_BUCKET_REGION'] = 'us-west-1'
+os.environ['DEST_KMS_KEY']       = ''
+os.environ['DEST_SECRET']        = 'dest-secret'
 
 os.environ['OBJECTS_QUEUE'] = ''
 os.environ['OBJECTS_TABLE'] = 'objects'
@@ -157,7 +158,8 @@ def setup_accounts(monkeypatch, dynamodb_client, iam_dst_creds, kms_client, secr
         SecretString=json.dumps({
             'user': iam_dst_creds['UserName'],
             'accesskey': iam_dst_creds['AccessKeyId'],
-            'secretkey': iam_dst_creds['SecretAccessKey'],
+            'secretaccesskey': iam_dst_creds['SecretAccessKey'],
+            'partition': 'aws-us-gov',
         }),
     )['ARN']
 
