@@ -479,9 +479,9 @@ def queue_handler(event, context):
                     {'type': record_detail_type}
                 )
         except Exception: # pylint: disable=broad-except
-            logger.exception('Unable to process record event: %(event)r', {'body': record_event})
+            logger.exception('Unable to process record event: %(event)r', {'event': record_event})
             failures.append({
                 'itemIdentifier': record['messageId']
             })
 
-    return failures
+    return { "batchItemFailures": failures }
