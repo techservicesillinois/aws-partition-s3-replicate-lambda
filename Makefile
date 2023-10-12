@@ -44,9 +44,9 @@ test-report: .test-setup
 	.venv/bin/pytest --junitxml="$(REPORTSDIR)/pytest.xml" tests/
 
 .validate-setup:
-	cd terraform && $(TERRAFORM_BIN) init -backend=false
+	cd terraform/validate/1.x-aws4 && $(TERRAFORM_BIN) init -backend=false
 validate: .validate-setup
-	cd terraform && $(TERRAFORM_BIN) validate
+	cd terraform/validate/1.x-aws4 && $(TERRAFORM_BIN) validate
 
 dist: build
 	[ -e "$(DISTDIR)" ] || mkdir -p "$(DISTDIR)"
