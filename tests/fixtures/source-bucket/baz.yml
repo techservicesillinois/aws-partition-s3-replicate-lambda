@@ -1,0 +1,15 @@
+---
+key: baz.txt
+versions:
+  - content: This is the baz file (v1).
+    tags:
+      Key1: value1v1
+      Key2: value2v1
+  - content: This is the baz file (v2).
+    tags:
+      Key1: value1v2
+      Key2: value2v2
+  - content: This is the baz file (v3).
+    tags:
+      Key1: value1v3
+      Key2: value2v3

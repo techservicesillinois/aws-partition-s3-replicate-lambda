@@ -3,3 +3,4 @@ freezegun
 moto
 pytest
 pytz
+pyyaml

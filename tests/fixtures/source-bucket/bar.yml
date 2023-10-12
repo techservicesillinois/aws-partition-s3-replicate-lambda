@@ -1,0 +1,5 @@
+---
+key: bar.txt
+versions:
+  - content: This is the bar file (v1).
+  - content: This is the bar file (v2).
