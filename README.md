@@ -8,7 +8,24 @@ This solution uses an SQS FIFO Queue to process events for the same object in
 the order they are received. However, there is the chance that if an object is
 quickly modified then the events might arrive to the queue out of order. You
 should be cautious about using this when the same object is being modified
-quickly.
+quickly. Data mapping source objects and versions to the destination is stored
+in a DynamoDB table.
+
+Requirements:
+
+- Source and destination buckets must both have versioning configured the same
+  way.
+- Source bucket must have EventBridge notifications enabled.
+
+The terraform will create the required IAM User in the destination account
+(using the `aws.destination` provider you specify), and a Secret for those
+credentials in the source account. You will need to create the access keys for
+the IAM User and store them in the secret with these fields:
+
+- `user`: name of the IAM User in the destination account.
+- `accesskey`, `secretaccesskey`: the generated pair of access keys.
+- `partition`: either `aws` (commercial) or `aws-us-gov` (US GovCloud).
+- `accountid`: the destination account ID.
 
 ## buildspec.yml
 
