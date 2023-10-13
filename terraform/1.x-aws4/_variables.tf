@@ -93,6 +93,18 @@ variable "environment_variables" {
     default     = {}
 }
 
+variable "error_alarm_threshold" {
+    type        = number
+    description = "Number of Lambda errors in 3 consecutive 5min periods before an alarm is triggered."
+    default     = 1
+}
+
+variable "notifications_topic_arn" {
+    type        = string
+    description = "SNS Topic to notify when a large number of errors is recorded on the Lambda."
+    default     = null
+}
+
 # =========================================================
 # Logging
 # =========================================================
