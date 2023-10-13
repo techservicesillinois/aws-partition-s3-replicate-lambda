@@ -1,6 +1,7 @@
 from datetime import datetime
 from io import BytesIO
 
+import botocore.client
 from botocore.exceptions import ClientError
 import pytest
 
@@ -342,6 +343,102 @@ def test_handle_create_notfound(setup_s3):
         Key={'Key': 'does-not-exist.txt', 'VersionId': '123'}
     )
 
+@pytest.mark.parametrize('obj_key, obj_ver_idx', [
+    pytest.param('foo.txt', 0),
+    pytest.param('bar.txt', 0),
+    pytest.param('bar.txt', 1),
+    pytest.param('baz.txt', 0),
+    pytest.param('baz.txt', 1),
+    pytest.param('baz.txt', 2),
+])
+def test_handle_create_dup(setup_s3, setup_s3_destobjs, obj_key, obj_ver_idx):
+    obj_data = setup_s3[obj_key][obj_ver_idx]
+    obj_ver = obj_data['VersionId']
+    detail = {
+        'bucket': {'name': 'source-bucket'},
+        'object': {'key': obj_key, 'version-id': obj_ver},
+    }
+
+    replicate_object = partition_s3_replicate.ReplicateObject(detail)
+    assert 'Item' in replicate_object.objects_table.get_item(
+        Key={'Key': obj_key, 'VersionId': obj_ver}
+    )
+
+    replicate_object.handle_created()
+
+    # Get the object data from the DynamoDB table to check later
+    obj_item = replicate_object.objects_table.get_item(
+        Key={'Key': obj_key, 'VersionId': obj_ver}
+    )['Item']
+    assert obj_item
+    assert obj_item['DestObject']['VersionId'] == setup_s3_destobjs[obj_key][obj_ver_idx]['VersionId']
+
+    # Make sure no new versions were uploaded
+    res = replicate_object._dst_s3_clnt.list_object_versions(
+        Bucket=partition_s3_replicate.DST_BUCKET,
+        Delimiter='/',
+        Prefix=obj_key,
+    )
+    assert len(res.get('Versions', [])) == len(setup_s3_destobjs[obj_key])
+
+@pytest.mark.parametrize('obj_key, obj_ver_idx', [
+    pytest.param('foo.txt', 0),
+    pytest.param('bar.txt', 0),
+    pytest.param('bar.txt', 1),
+    pytest.param('baz.txt', 0),
+    pytest.param('baz.txt', 1),
+    pytest.param('baz.txt', 2),
+])
+def test_handle_create_dup_error(monkeypatch, setup_s3, setup_s3_destobjs, obj_key, obj_ver_idx):
+    obj_data = setup_s3[obj_key][obj_ver_idx]
+    obj_ver = obj_data['VersionId']
+    detail = {
+        'bucket': {'name': 'source-bucket'},
+        'object': {'key': obj_key, 'version-id': obj_ver},
+    }
+    replicate_object = partition_s3_replicate.ReplicateObject(detail)
+    obj_item = replicate_object.objects_table.get_item(
+        Key={'Key': obj_key, 'VersionId': obj_ver}
+    )['Item']
+
+    # Mocked botocore _make_api_call function
+    _make_api_call_orig = botocore.client.BaseClient._make_api_call
+    def _make_api_call(self, operation_name, kwarg):
+        if operation_name == 'HeadObject':
+            bucket = kwarg['Bucket']
+            key = kwarg['Key']
+            version_id = kwarg.get('VersionId')
+
+            if bucket == partition_s3_replicate.DST_BUCKET and key == obj_key and version_id == obj_item['DestObject']['VersionId']:
+                raise ClientError(
+                    dict(
+                        Error=dict(
+                            Code='InternalError',
+                            Message='Unknown error occured.',
+                        )
+                    ),
+                    'head_object'
+                )
+        # If we don't want to patch the API call
+        return _make_api_call_orig(self, operation_name, kwarg)
+    monkeypatch.setattr(botocore.client.BaseClient, '_make_api_call', _make_api_call)
+
+    replicate_object.handle_created()
+
+    # Get the object data from the DynamoDB table to check later
+    obj_item = replicate_object.objects_table.get_item(
+        Key={'Key': obj_key, 'VersionId': obj_ver}
+    )['Item']
+    assert obj_item
+    assert obj_item['DestObject']['VersionId'] != setup_s3_destobjs[obj_key][obj_ver_idx]['VersionId']
+
+    # Make sure no new versions were uploaded
+    res = replicate_object._dst_s3_clnt.list_object_versions(
+        Bucket=partition_s3_replicate.DST_BUCKET,
+        Delimiter='/',
+        Prefix=obj_key,
+    )
+    assert len(res.get('Versions', [])) == len(setup_s3_destobjs[obj_key]) + 1
 
 @pytest.mark.parametrize('obj_key, obj_ver_idx', [
     pytest.param('foo.txt', 0),

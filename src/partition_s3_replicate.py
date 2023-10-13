@@ -269,6 +269,33 @@ class ReplicateObject:
         """
         src_object, src_object_tags = self.src_object, self.src_object_tags
 
+        obj_item, _ = self.object_item
+        if obj_item:
+            # We already have a destination object for this source object. Check
+            # that the destination still exists, and if so then skip. If the
+            # destination does not exist then continue on.
+            params = {
+                'Bucket': DST_BUCKET,
+                'Key': self.key,
+            }
+            if obj_item.get('VersionId'):
+                params['VersionId'] = obj_item['VersionId']
+            try:
+                self._dst_s3_clnt.head_object(**params)
+            except ClientError as client_err:
+                # For all cases of a client error (not found, access error, etc)
+                # we just want to continue with the replication.
+                self.logger.warning(
+                    'Destination object found in the table, but error accessing it in S3 (%(code)s): %(message)s',
+                    {
+                        'code': client_err.response['Error']['Code'],
+                        'message': client_err.response['Error']['Message'],
+                    }
+                )
+            else:
+                self.logger.warning('Repeated CreateObject event; skipping.')
+                return
+
         with TemporaryFile('w+b') as temp_fh:
             src_extra_args = {}
             if self.version_id:
