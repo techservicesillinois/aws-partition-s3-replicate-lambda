@@ -3,7 +3,7 @@ env:
   shell: bash
   variables:
     APP_NAME: partitionS3Replicate
-    TERRAFORM_VERSION: 1.4.5
+    TERRAFORM_VERSION: 1.6.2
 phases:
   install:
     runtime-versions:

@@ -138,5 +138,7 @@ dmypy.json
 cython_debug/
 
 
-terraform/.terraform/
-terraform/.terraform.lock.hcl
+terraform/*/.terraform/
+terraform/*/.terraform.lock.hcl
+tests/terraform/*/.terraform/
+tests/terraform/*/.terraform.lock.hcl
