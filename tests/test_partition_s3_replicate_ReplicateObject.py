@@ -534,6 +534,7 @@ def test_handle_delete_notfound(setup_s3, setup_s3_destobjs, obj_key, obj_ver_id
     detail = {
         'bucket': {'name': 'source-bucket'},
         'object': {'key': obj_key, 'version-id': obj_ver},
+        'reason': 'DeleteObject',
     }
 
     replicate_object = partition_s3_replicate.ReplicateObject(detail)
@@ -563,6 +564,51 @@ def test_handle_delete_notfound(setup_s3, setup_s3_destobjs, obj_key, obj_ver_id
         Key={'Key': obj_key, 'VersionId': obj_ver}
     )
 
+@pytest.mark.parametrize('obj_key, obj_ver_idx', [
+    pytest.param('foo.txt', 0),
+    pytest.param('bar.txt', 0),
+    pytest.param('bar.txt', 1),
+    pytest.param('baz.txt', 0),
+    pytest.param('baz.txt', 1),
+    pytest.param('baz.txt', 2),
+])
+def test_handle_delete_lifecycle(setup_s3, setup_s3_destobjs, obj_key, obj_ver_idx):
+    """ Test handling deletes (lifecycle) on a versioned bucket. """
+    obj_data = setup_s3[obj_key][obj_ver_idx]
+    obj_ver = obj_data['VersionId']
+    detail = {
+        'bucket': {'name': 'source-bucket'},
+        'object': {'key': obj_key, 'version-id': obj_ver},
+        'reason': 'Lifecycle Expiration',
+    }
+
+    replicate_object = partition_s3_replicate.ReplicateObject(detail)
+    obj_item = replicate_object.objects_table.get_item(
+        Key={'Key': obj_key, 'VersionId': obj_ver}
+    )['Item']
+
+    replicate_object.handle_deleted_lifecycle()
+
+    # Verify that the version still exists
+    res = replicate_object._dst_s3_clnt.head_object(
+        Bucket=partition_s3_replicate.DST_BUCKET,
+        Key=obj_key,
+        VersionId=obj_item['DestObject']['VersionId']
+    )
+    assert res
+
+    # Verify that other versions still exist
+    res = replicate_object._dst_s3_clnt.list_object_versions(
+        Bucket=partition_s3_replicate.DST_BUCKET,
+        Delimiter='/',
+        Prefix=obj_key,
+    )
+    assert len(res.get('Versions', [])) == len(setup_s3[obj_key])
+
+    # Check that it was deleted from DynamoDB
+    assert 'Item' not in replicate_object.objects_table.get_item(
+        Key={'Key': obj_key, 'VersionId': obj_ver}
+    )
 
 @pytest.mark.parametrize('obj_key, obj_ver_idx, tags', [
     pytest.param('foo.txt', 0, {'New': '1'}),

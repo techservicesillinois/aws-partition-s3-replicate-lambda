@@ -377,6 +377,14 @@ class ReplicateObject:
 
         self.object_item = None
 
+    def handle_deleted_lifecycle(self):
+        """
+        Handle an event where an object was deleted in the source bucket, for
+        a Lifecycle Event. These are not replicated, but we do want to cleanup
+        the metadata in the DynamoDB table.
+        """
+        self.object_item = None
+
     def handle_tags(self):
         """
         Handle an event where an objects tags were modified in the source
@@ -443,12 +451,6 @@ def event_handler(event, context):
         }:
         obj_logger.debug('Skipping: %(type)s', {'type': detail_type})
         return
-    if detail_type == 'Object Deleted' and detail.get('reason') != 'DeleteObject':
-        obj_logger.debug(
-            'Skipping %(type)s (%(reason)s)',
-            {'type': detail_type, 'reason': detail.get('reason', '(unknown)')}
-        )
-        return
 
     queue = sqs_rsrc.Queue(OBJECTS_QUEUE)
     res = queue.send_message(
@@ -496,15 +498,28 @@ def queue_handler(event, context):
             record_detail_type = record_event['detail-type']
             if record_detail_type == 'Object Created':
                 replicate_object.handle_created()
+
             elif record_detail_type == 'Object Deleted':
-                replicate_object.handle_deleted()
+                record_event_reason = record_event['detail'].get('reason')
+                if record_event_reason == 'DeleteObject':
+                    replicate_object.handle_deleted()
+                elif record_event_reason == 'Lifecycle Expiration':
+                    replicate_object.handle_deleted_lifecycle()
+                else:
+                    replicate_object.logger.warning(
+                        'Unknown record event delete reason: %(reason)r',
+                        {'reason': record_event_reason}
+                    )
+
             elif record_detail_type in {'Object Tags Added', 'Object Tags Deleted'}:
                 replicate_object.handle_tags()
+
             else:
                 replicate_object.logger.error(
                     'Unknown record event detail type: %(type)s',
                     {'type': record_detail_type}
                 )
+
         except Exception: # pylint: disable=broad-except
             logger.exception('Unable to process record event: %(event)r', {'event': record_event})
             failures.append({

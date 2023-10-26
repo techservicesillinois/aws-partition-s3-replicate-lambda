@@ -75,7 +75,7 @@ def test_get_dst_creds(setup_accounts, iam_dst_creds):
                 'reason': 'Lifecycle Expiration'
             }
         },
-        False,
+        True,
         id='Object Deleted (Lifecycle Expiration)'
     ),
     pytest.param(
