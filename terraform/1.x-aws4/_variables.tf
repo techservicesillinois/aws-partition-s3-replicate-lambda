@@ -99,6 +99,12 @@ variable "error_alarm_threshold" {
     default     = 1
 }
 
+variable "function_tags" {
+    type        = map(string)
+    description = "Extra tags to add to the Lambda function only."
+    default     = {}
+}
+
 variable "notifications_topic_arn" {
     type        = string
     description = "SNS Topic to notify when a large number of errors is recorded on the Lambda."

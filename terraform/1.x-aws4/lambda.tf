@@ -126,7 +126,7 @@ data "aws_iam_policy_document" "this_queue" {
 
 module "this_event" {
     source  = "terraform-aws-modules/lambda/aws"
-    version = "6.0.1"
+    version = "6.4.0"
 
     function_name = var.name
     description   = var.description
@@ -134,6 +134,7 @@ module "this_event" {
     runtime       = "python3.8"
     memory_size   = 128
     timeout       = 30
+    function_tags = var.function_tags
 
     environment_variables = merge(
         var.environment_variables,
@@ -181,7 +182,7 @@ module "this_event" {
 
 module "this_queue" {
     source  = "terraform-aws-modules/lambda/aws"
-    version = "6.0.1"
+    version = "6.4.0"
 
     function_name = "${var.name}-queue"
     description   = var.description
@@ -189,6 +190,7 @@ module "this_queue" {
     runtime       = "python3.8"
     memory_size   = 128
     timeout       = 15*60
+    function_tags = var.function_tags
 
     environment_variables = merge(
         var.environment_variables,
