@@ -42,13 +42,7 @@ from botocore.exceptions import ClientError
 import git
 import magic
 
-DEFAULT_REGION = os.environ.get(
-    'AWS_REGION',
-    os.environ.get(
-        'AWS_DEFAULT_REGION',
-        'us-east-2'
-    )
-)
+DEFAULT_REGION = boto3.Session().region_name
 
 DEFAULT_APP_NAME = os.environ.get('APP_NAME')
 DEFAULT_ENVIRONMENT = os.environ.get('ENVIRONMENT', 'latest')
