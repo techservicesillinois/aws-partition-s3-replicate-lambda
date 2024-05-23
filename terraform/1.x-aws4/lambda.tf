@@ -126,7 +126,7 @@ data "aws_iam_policy_document" "this_queue" {
 
 module "this_event" {
     source  = "terraform-aws-modules/lambda/aws"
-    version = "6.4.0"
+    version = "7.4.0"
 
     function_name = var.name
     description   = var.description
@@ -182,7 +182,7 @@ module "this_event" {
 
 module "this_queue" {
     source  = "terraform-aws-modules/lambda/aws"
-    version = "6.4.0"
+    version = "7.4.0"
 
     function_name = "${var.name}-queue"
     description   = var.description
