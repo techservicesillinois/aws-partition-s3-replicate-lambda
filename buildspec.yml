@@ -3,7 +3,7 @@ env:
   shell: bash
   variables:
     APP_NAME: partitionS3Replicate
-    TERRAFORM_VERSION: 1.6.2
+    TERRAFORM_VERSION: 1.9.5
 phases:
   install:
     runtime-versions:
@@ -13,7 +13,8 @@ phases:
       - 'export PATH="$CODEBUILD_SRC_DIR/.local/bin:$PATH"'
       - |
         if [[ ! -e .local/bin/terraform ]]; then
-          curl --silent --fail --location https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip | zcat > .local/bin/terraform
+          curl --silent --fail --location https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip > /tmp/terraform.zip
+          unzip /tmp/terraform.zip terraform -d .local/bin
           chmod a+rx .local/bin/terraform
         fi
       - 'export TF_DATA_DIR="$CODEBUILD_SRC_DIR/.local/terraform"'
