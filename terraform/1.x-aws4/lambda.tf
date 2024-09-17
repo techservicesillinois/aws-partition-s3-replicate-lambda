@@ -131,7 +131,7 @@ module "this_event" {
     function_name = var.name
     description   = var.description
     handler       = "partition_s3_replicate.event_handler"
-    runtime       = "python3.8"
+    runtime       = "python3.11"
     memory_size   = 128
     timeout       = 30
     function_tags = var.function_tags
@@ -187,7 +187,7 @@ module "this_queue" {
     function_name = "${var.name}-queue"
     description   = var.description
     handler       = "partition_s3_replicate.queue_handler"
-    runtime       = "python3.8"
+    runtime       = "python3.11"
     memory_size   = 128
     timeout       = 15*60
     function_tags = var.function_tags
