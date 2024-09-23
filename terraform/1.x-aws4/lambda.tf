@@ -139,7 +139,7 @@ module "this_event" {
     environment_variables = merge(
         var.environment_variables,
         {
-            LOGGING_LEVEL  = local.is_debug ? "DEBUG" : "INFO"
+            LOGGING_LEVEL = local.partition == "aws" || local.is_debug ? "DEBUG" : "INFO"
 
 
             DEST_BUCKET        = var.destination_bucket
@@ -162,6 +162,8 @@ module "this_event" {
 
     cloudwatch_logs_retention_in_days = local.is_debug ? 7 : 30
     cloudwatch_logs_kms_key_id        = var.log_encryption_arn
+    logging_log_format                = "JSON"
+    logging_application_log_level     = local.is_debug ? "DEBUG" : "INFO"
 
     create_current_version_async_event_config   = false
     create_current_version_allowed_triggers     = false
@@ -195,7 +197,7 @@ module "this_queue" {
     environment_variables = merge(
         var.environment_variables,
         {
-            LOGGING_LEVEL  = local.is_debug ? "DEBUG" : "INFO"
+            LOGGING_LEVEL = local.partition == "aws" || local.is_debug ? "DEBUG" : "INFO"
 
             DEST_BUCKET        = var.destination_bucket
             DEST_BUCKET_REGION = local.dest_region_name
@@ -217,6 +219,8 @@ module "this_queue" {
 
     cloudwatch_logs_retention_in_days = local.is_debug ? 7 : 30
     cloudwatch_logs_kms_key_id        = var.log_encryption_arn
+    logging_log_format                = "JSON"
+    logging_application_log_level     = local.is_debug ? "DEBUG" : "INFO"
 
     create_current_version_async_event_config   = false
     create_current_version_allowed_triggers     = false
