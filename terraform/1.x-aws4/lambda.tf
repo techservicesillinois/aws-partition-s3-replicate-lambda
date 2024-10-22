@@ -6,7 +6,7 @@ data "aws_s3_object" "this" {
     count = var.deploy_s3zip == null ?  0 : 1
 
     bucket = var.deploy_s3zip.bucket
-    key    = "${var.deploy_s3zip.prefix}partitionS3Replicate/${var.environment}.zip"
+    key    = "${var.deploy_s3zip.prefix}partitionS3Replicate/${var.deploy_s3zip.latest ? "latest" : var.environment}.zip"
 }
 
 data "aws_iam_policy_document" "this_event" {
